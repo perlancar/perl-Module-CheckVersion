@@ -25,6 +25,10 @@ Designed to be more general and able to provide more information in the future
 in addition to mere checking of latest version, but checking latest version is
 currently the only implemented feature.
 
+Can handle non-CPAN modules, as long as you put the appropriate `$AUTHORITY` in
+your modules and create the `Module::CheckVersion::<scheme>` to handle your
+authority scheme.
+
 _
     args => {
         module => {
@@ -122,6 +126,13 @@ Check latest version of modules:
 
  use Module::CheckVersion qw(check_module_version);
 
- my $res = check_module_version(module => 'Foo::Bar');
- say "Module Foo::Bar is the latest version ($res->[2]{latest_version})"
+ my $res = check_module_version(module => 'Clone');
+ # sample result: [200, "OK", {latest_version=>'0.38', installed_version=>'0.37', is_latest_version=>0}]
+
+ say "Module Clone is the latest version ($res->[2]{latest_version})"
      if $res->[2]{is_latest_version};
+
+
+=head1 SEE ALSO
+
+L<check-module-version> (from L<App::CheckModuleVersion>) for the CLI.
