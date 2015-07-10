@@ -1,5 +1,13 @@
 Revision history for Module-CheckVersion
 
+0.02    2015-07-10 (PERLANCAR)
+
+	- No functional changes.
+
+	- [doc] Mention about non-CPAN modules, tweak example, mention
+	  App::CheckModuleVersion.
+
+
 0.01     2015-07-10 (PERLANCAR)
 
          - First release.
