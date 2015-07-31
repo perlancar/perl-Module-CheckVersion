@@ -135,4 +135,4 @@ Check latest version of modules:
 
 =head1 SEE ALSO
 
-L<check-module-version> (from L<App::CheckModuleVersion>) for the CLI.
+The distribution comes with a CLI: L<check-module-version>.
