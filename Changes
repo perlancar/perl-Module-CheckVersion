@@ -1,5 +1,13 @@
 Revision history for Module-CheckVersion
 
+0.05    2015-08-19 (PERLANCAR)
+
+        - No functional changes.
+
+        - [build] Rebuild with updated App:GenPericmdCompleterScript (0.04)
+          which produces smaller completer script.
+
+
 0.04    2015-08-19 (PERLANCAR)
 
         - [build] Rebuild with updated DZP:GenPericmdScript (0.23) which now
