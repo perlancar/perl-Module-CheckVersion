@@ -8,14 +8,14 @@ use strict;
 use warnings;
 
 use HTTP::Tiny;
-use JSON;
+use JSON::MaybeXS;
 
 sub check_latest_version {
     my ($mod, $installed_version, $chkres) = @_;
 
     my $res = HTTP::Tiny->new->get("http://api.metacpan.org/v0/module/$mod?fields=name,version");
     return [$res->{status}, "API request failed: $res->{reason}"] unless $res->{success};
-    eval { $res = JSON::decode_json($res->{content}) };
+    eval { $res = JSON::MaybeXS::decode_json($res->{content}) };
     return [500, "Can't decode JSON API response: $@"] if $@;
     return [500, "Error from API response: $res->{message}"] if $res->{message};
     my $latest_version = $res->{version};
