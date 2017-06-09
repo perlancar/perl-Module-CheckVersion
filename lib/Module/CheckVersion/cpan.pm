@@ -13,7 +13,7 @@ use JSON::MaybeXS;
 sub check_latest_version {
     my ($mod, $installed_version, $chkres) = @_;
 
-    my $res = HTTP::Tiny->new->get("http://api.metacpan.org/v0/module/$mod?fields=name,version");
+    my $res = HTTP::Tiny->new->get("http://fastapi.metacpan.org/v1/module/$mod?fields=name,version");
     return [$res->{status}, "API request failed: $res->{reason}"] unless $res->{success};
     eval { $res = JSON::MaybeXS::decode_json($res->{content}) };
     return [500, "Can't decode JSON API response: $@"] if $@;
