@@ -2,3 +2,4 @@ Module-CheckVersion-*
 .build
 *~
 nytprof*
+.DS_Store
