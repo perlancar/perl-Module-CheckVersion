@@ -63,7 +63,11 @@ sub check_latest_version {
 
 In F<Some/Module.pm>:
 
- our $AUTHORITY = 'darkpan:https://github.com/mycompany/my-darkpan/blob/master';
+ our $AUTHORITY = 'darkpan:https://github.com/mycompany/my-darkpan/raw/refs/heads/master';
+
+or perhaps:
+
+ our $AUTHORITY = 'file:/my/darkpan';
 
 
 =head1 DESCRIPTION
