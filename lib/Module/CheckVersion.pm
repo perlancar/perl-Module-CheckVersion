@@ -1,16 +1,16 @@
 package Module::CheckVersion;
 
+use 5.010001;
+use strict;
+use warnings;
+
+use Exporter qw(import);
+
 # AUTHORITY
 # DATE
 # DIST
 # VERSION
 
-use 5.010001;
-use strict;
-use warnings;
-
-use Exporter ();
-our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(check_module_version);
 
 our %SPEC;
@@ -19,7 +19,7 @@ $SPEC{check_module_version} = {
     v => 1.1,
     summary => 'Check module (e.g. check latest version) with CPAN '.
         '(or equivalent repo)',
-    description => <<'_',
+    description => <<'MARKDOWN',
 
 Designed to be more general and able to provide more information in the future
 in addition to mere checking of latest version, but checking latest version is
@@ -29,16 +29,16 @@ Can handle non-CPAN modules, as long as you put the appropriate `$AUTHORITY` in
 your modules and create the `Module::CheckVersion::<scheme>` to handle your
 authority scheme.
 
-_
+MARKDOWN
     args => {
         module => {
             schema => ['str*', match=>qr/\A\w+(::\w+)*\z/],
-            description => <<'_',
+            description => <<'MARKDOWN',
 
 This routine will try to load the module, and retrieve its `$VERSION`. If
 loading fails will assume module's installed version is undef.
 
-_
+MARKDOWN
             req => 1,
             pos => 0,
         },
@@ -49,7 +49,7 @@ _
         default_authority_scheme => {
             schema  => 'str',
             default => 'cpan',
-            description => <<'_',
+            description => <<'MARKDOWN',
 
 If a module does not set `$AUTHORITY` (which contains string like
 `<scheme>:<extra>` like `cpan:PERLANCAR`), the default authority scheme will be
@@ -59,7 +59,7 @@ is used to implement actual checking.
 Can also be set to undef, in which case when module's `$AUTHORITY` is not
 available, will return 412 status.
 
-_
+MARKDOWN
         },
     },
 };

@@ -1,14 +1,16 @@
 package Module::CheckVersion::cpan;
 
-# DATE
-# VERSION
-
-use 5.010;
+use 5.010001;
 use strict;
 use warnings;
 
 use HTTP::Tiny;
 use JSON::MaybeXS;
+
+# AUTHORITY
+# DATE
+# DIST
+# VERSION
 
 sub check_latest_version {
     my ($mod, $installed_version, $chkres) = @_;
