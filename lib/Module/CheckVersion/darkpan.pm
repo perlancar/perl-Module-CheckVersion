@@ -6,7 +6,7 @@ use warnings;
 
 use File::Temp 'tempfile';
 use File::Slurper 'write_binary';
-use HTTP::Tiny::Cache;
+use HTTP::Tiny;
 use JSON::MaybeXS;
 
 # AUTHORITY
@@ -18,7 +18,7 @@ sub check_latest_version {
     my ($mod, $installed_version, $chkres, $auth_scheme, $auth_content) = @_;
 
     my $url = "$auth_content/modules/02packages.details.txt.gz";
-    my $res = HTTP::Tiny::Cache->new->get($url);
+    my $res = HTTP::Tiny->new->get($url);
     #use DD; dd $res;
     return [$res->{status}, "Retrieving $url failed: $res->{reason}"] unless $res->{success};
 
@@ -76,5 +76,5 @@ and retrieve:
 
  <URL>/modules/02packages.details.txt.gz
 
-using L<HTTP::Tiny::Cache>, then parse the downloaded file using
+using L<HTTP::Tiny>, then parse the downloaded file using
 L<Parse::CPAN::Packages>, then check module version from the parsed information.
