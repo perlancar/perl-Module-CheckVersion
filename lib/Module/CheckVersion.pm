@@ -64,7 +64,7 @@ MARKDOWN
     },
 };
 sub check_module_version {
-    no strict 'refs';
+    no strict 'refs'; ## no critic: TestingAndDebugging::ProhibitNoStrict
 
     my %args = @_;
 
