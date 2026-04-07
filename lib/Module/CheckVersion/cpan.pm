@@ -42,6 +42,17 @@ sub check_latest_version {
 }
 
 1;
-# ABSTRACT: Handler for cpan
+# ABSTRACT: Handler for "cpan" authority scheme
 
 =for Pod::Coverage .+
+
+=head1 SYNOPSIS
+
+In F<Some/Module.pm>:
+
+ our $AUTHORITY = 'cpan:APAUSEID';
+
+
+=head1 DESCRIPTION
+
+This handler will check module version on MetaCPAN.

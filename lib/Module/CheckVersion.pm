@@ -97,20 +97,22 @@ sub check_module_version {
         }
 
         return [412, "AUTHORITY in $mod does not contain scheme"]
-            unless $auth =~ /^(\w+):/;
-        my $auth_scheme = $1;
+            unless $auth =~ /^(\w+):(.*)/;
+        my ($auth_scheme, $auth_content) = ($1, $2);
 
         $scheme_mod = "Module::CheckVersion::$auth_scheme";
         my $mod_pm = $scheme_mod; $mod_pm =~ s!::!/!g; $mod_pm .= ".pm";
         require $mod_pm;
-        [200];
+        [200, "OK", undef, {"func.auth_scheme"=>$auth_scheme, "func.auth_content"=>$auth_content}];
     };
 
     if ($args{check_latest_version} // 1) {
         my $loadres = $code_load_scheme_mod->();
         return $loadres unless $loadres->[0] == 200;
         my $ver = ${"$mod\::VERSION"};
-        my $chkres = &{"$scheme_mod\::check_latest_version"}($mod,$ver,$chkres);
+        my $chkres = &{"$scheme_mod\::check_latest_version"}($mod,$ver,$chkres,
+                                                             $loadres->[3]{"func.auth_scheme"},
+                                                             $loadres->[3]{"func.auth_content"});
         return $chkres unless $chkres->[0] == 200;
     }
 
