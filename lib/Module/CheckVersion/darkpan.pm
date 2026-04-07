@@ -67,7 +67,12 @@ In F<Some/Module.pm>:
 
 or perhaps:
 
- our $AUTHORITY = 'file:/my/darkpan';
+ our $AUTHORITY = 'darkpan:file:/my/darkpan';
+
+Actually you can also use a CPAN mirror (anything that contains
+C<modules/02packages.details.txt.gz>):
+
+ our $AUTHORITY = 'darkpan:https://www.cpan.org/';
 
 
 =head1 DESCRIPTION
