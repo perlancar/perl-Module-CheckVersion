@@ -1,3 +1,13 @@
+0.091   2026-04-08  Released-By: PERLANCAR; Urgency: medium
+
+        - Check mod->VERSION before $mod::VERSION to get version. Check
+          mod->AUTHORITY before $mod::AUTHORITY to get authority.
+
+        - [internal] Refactoring.
+
+        - [doc] Mention CPAN::Meta::X.
+
+
 0.090   2026-04-07  Released-By: PERLANCAR; Urgency: medium
 
         - Handle authority scheme 'darkpan'.

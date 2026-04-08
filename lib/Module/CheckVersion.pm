@@ -168,6 +168,11 @@ Check latest version of modules:
      if $res->[2]{is_latest_version};
 
 
+=head1 FUNCTIONS
+
+=head2 check_module_version
+
+
 =head1 SEE ALSO
 
 The distribution comes with a CLI: L<check-module-version>.
