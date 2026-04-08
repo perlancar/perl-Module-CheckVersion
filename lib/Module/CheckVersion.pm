@@ -17,8 +17,7 @@ our %SPEC;
 
 $SPEC{check_module_version} = {
     v => 1.1,
-    summary => 'Check module (e.g. check latest version) with CPAN '.
-        '(or equivalent repo)',
+    summary => 'Check module version against the authority (CPAN or elsewhere)',
     description => <<'MARKDOWN',
 
 Designed to be more general and able to provide more information in the future
@@ -26,8 +25,8 @@ in addition to mere checking of latest version, but checking latest version is
 currently the only implemented feature.
 
 Can handle non-CPAN modules, as long as you put the appropriate `$AUTHORITY` in
-your modules and create the `Module::CheckVersion::<scheme>` to handle your
-authority scheme.
+your modules and create the `Module::CheckVersion::AuthorityScheme::<scheme>` to
+handle your authority scheme.
 
 MARKDOWN
     args => {
@@ -45,18 +44,26 @@ MARKDOWN
         check_latest_version => {
             schema => 'bool',
             default => 1,
+            description => <<'MARKDOWN',
+
+If set to 0, will just check installed version.
+
+MARKDOWN
         },
         default_authority_scheme => {
             schema  => 'str',
             default => 'cpan',
             description => <<'MARKDOWN',
 
-If a module does not set `$AUTHORITY` (which contains string like
-`<scheme>:<extra>` like `cpan:PERLANCAR`), the default authority scheme will be
-determined from this setting. The module `Module::CheckVersion::<scheme>` module
-is used to implement actual checking.
+If a module does not set authority, the default authority scheme will be
+determined from this setting. The module
+`Module::CheckVersion::AuthorityScheme::<scheme>` module is used to implement
+actual checking.
 
-Can also be set to undef, in which case when module's `$AUTHORITY` is not
+How module's authority is retrieved: First, if `$module->can("AUTHORITY")` then
+`AUTHORITY` method is called. Otherwise, `$AUTHORITY` package variable is used.
+
+Can also be set to undef, in which case when module's authority is not
 available, will return 412 status.
 
 MARKDOWN
@@ -67,56 +74,82 @@ sub check_module_version {
     no strict 'refs'; ## no critic: TestingAndDebugging::ProhibitNoStrict
 
     my %args = @_;
-
     my $mod = $args{module} or return [400, "Please specify module"];
-    my $defscheme = $args{default_authority_scheme} // 'cpan';
+    my $check_latest_version = $args{check_latest_version} // 1;
+    my $default_authority_scheme = $args{default_authority_scheme} // 'cpan';
 
-    my $scheme_mod;
+    my $res = {};
 
-    my $chkres = {};
-
-    my $code_load_scheme_mod = sub {
-        return [200] if $scheme_mod;
-
-        # GET AUTHORITY
-        my $auth;
-        {
-            $auth = ${"$mod\::AUTHORITY"};
-            last if $auth;
-            my $mod_pm = $mod; $mod_pm =~ s!::!/!g; $mod_pm .= ".pm";
-            eval { require $mod_pm; 1 };
-            if ($@) {
-                $chkres->{load_module_error} = $@;
+  LOAD_MODULE: {
+        (my $mod_pm = "$mod.pm") =~ s!::!/!g;
+        eval { require $mod_pm; 1 };
+        $res->{load_module_error} = $@ if $@;
+        $res->{installed_version} = do {
+            if ($mod->can("VERSION")) {
+                $mod->VERSION;
             } else {
-                $auth = ${"$mod\::AUTHORITY"};
-                last if $auth;
+                ${"$mod\::VERSION"};
             }
-            $auth = "$defscheme:" if $defscheme;
-            last if $auth;
-            return [412, "Can't determine AUTHORITY for $mod"];
+        };
+    } # LOAD_MODULE
+
+  CHECK_LATEST_VERSION: {
+        last unless $check_latest_version;
+
+        my $authority;
+      GET_AUTHORITY: {
+            if ($mod->can("AUTHORITY")) {
+                $authority = $mod->AUTHORITY;
+            } else {
+                $authority = ${"$mod\::AUTHORITY"};
+            }
+            unless ($authority) {
+                $authority = "$default_authority_scheme:"
+                    if $default_authority_scheme;
+            }
+            unless ($authority) {
+                return [412, "Can't determine authority for module $mod"];
+            }
+        } # GET_AUTHORITY
+
+        return [412, "Module $mod\'s authority '$authority' does not contain scheme"]
+            unless $authority =~ /^(\w+):(.*)/;
+        my ($authority_scheme, $authority_content) = ($1, $2);
+
+        my $scheme_mod;
+      LOAD_CHECKER_MODULE: {
+            $scheme_mod = "Module::CheckVersion::AuthorityScheme::$authority_scheme";
+            (my $scheme_mod_pm = "$scheme_mod.pm") =~ s!::!/!g;
+            require $scheme_mod_pm;
+            return [500, "Cannot load checker module for authority scheme '$authority_scheme'"]
+                if $@;
+        } # LOAD_CHECKER_MODULE
+
+        my $clvres = &{"$scheme_mod\::check_latest_version"}(
+            $mod, $authority_scheme, $authority_content);
+
+        if ($clvres->[0] == 200) {
+            $res->{latest_version} = $clvres->[2];
+        } else {
+            $res->{check_latest_version_error} = $clvres->[1];
         }
 
-        return [412, "AUTHORITY in $mod does not contain scheme"]
-            unless $auth =~ /^(\w+):(.*)/;
-        my ($auth_scheme, $auth_content) = ($1, $2);
+    } # CHECK_LATEST_VERSION
 
-        $scheme_mod = "Module::CheckVersion::$auth_scheme";
-        my $mod_pm = $scheme_mod; $mod_pm =~ s!::!/!g; $mod_pm .= ".pm";
-        require $mod_pm;
-        [200, "OK", undef, {"func.auth_scheme"=>$auth_scheme, "func.auth_content"=>$auth_content}];
-    };
-
-    if ($args{check_latest_version} // 1) {
-        my $loadres = $code_load_scheme_mod->();
-        return $loadres unless $loadres->[0] == 200;
-        my $ver = ${"$mod\::VERSION"};
-        my $chkres = &{"$scheme_mod\::check_latest_version"}($mod,$ver,$chkres,
-                                                             $loadres->[3]{"func.auth_scheme"},
-                                                             $loadres->[3]{"func.auth_content"});
-        return $chkres unless $chkres->[0] == 200;
+    if ($res->{installed_version} && $res->{latest_version}) {
+        my $cmp = eval {
+            version->parse($res->{installed_version}) <=>
+                version->parse($res->{latest_version});
+        };
+        if ($@) {
+            $res->{compare_version_error} = @_;
+            $res->{is_latest_version} = undef;
+        } else {
+            $res->{is_latest_version} = $cmp >= 0 ? 1:0;
+        }
     }
 
-    [200, "OK", $chkres];
+    [200, "OK", $res];
 }
 
 1;
@@ -138,3 +171,5 @@ Check latest version of modules:
 =head1 SEE ALSO
 
 The distribution comes with a CLI: L<check-module-version>.
+
+x_authority key in L<CPAN::Meta::X>

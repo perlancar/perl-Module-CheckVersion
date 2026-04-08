@@ -1,4 +1,4 @@
-package Module::CheckVersion::darkpan;
+package Module::CheckVersion::AuthorityScheme::darkpan;
 
 use 5.010001;
 use strict;
@@ -15,9 +15,9 @@ use JSON::MaybeXS;
 # VERSION
 
 sub check_latest_version {
-    my ($mod, $installed_version, $chkres, $auth_scheme, $auth_content) = @_;
+    my ($mod, $authority_scheme, $authority_content) = @_;
 
-    my $url = "$auth_content/modules/02packages.details.txt.gz";
+    my $url = "$authority_content/modules/02packages.details.txt.gz";
     my $res = HTTP::Tiny->new->get($url);
     #use DD; dd $res;
     return [$res->{status}, "Retrieving $url failed: $res->{reason}"] unless $res->{success};
@@ -33,25 +33,7 @@ sub check_latest_version {
         return [404, "No such module '$mod' in $url"];
     }
 
-    my $latest_version = $m->version;
-
-    $chkres->{installed_version} = $installed_version;
-    $chkres->{latest_version} = $latest_version;
-    if (defined $installed_version) {
-        my $cmp = eval {
-            version->parse($installed_version) <=>
-                version->parse($latest_version);
-        };
-        if ($@) {
-            $chkres->{compare_version_err} = @_;
-            $chkres->{is_latest_version} = undef;
-        } else {
-            $chkres->{is_latest_version} = $cmp >= 0 ? 1:0;
-        }
-    } else {
-        $chkres->{is_latest_version} = 0;
-    }
-    [200];
+    [200, "OK", $m->version];
 }
 
 1;
